@@ -1,3 +1,5 @@
+# Handling Geographical Cache Using Nginx and Lua
+
 The following approach uses `Nginx` to serve the user with already cached `geolocation` based data based on the `location` of the user.
 
 Assume we have an application, which gets the `latitude` and the `longitude` of the user, searches through a database which in this sample application, saves "stores" based on their location, and responds to the user with the nearest store to them.
