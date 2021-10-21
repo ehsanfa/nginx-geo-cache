@@ -35,14 +35,12 @@ services:
 
 ## 1. Application
 As mentioned above, the application is a simple `Flask` app, which gets the request from the user and serves an arbitrary response.
-The request in this case simply contains a `lat` for the latitude and a `long` for the longitude of the user. Then it simply calculates a store `id`, saves it to the `Redis`, and serves the user.
+The request in this case simply contains a `lat` for the latitude and a `long` for the longitude of the user. Then it simply calculates a store `id`, and serves the user.
 ```
 from flask import Flask, make_response, request
-import redis
 import json
 
 app = Flask(__name__)
-r = redis.Redis(host='redis', port=6379, db=0)
 
 @app.route('/', methods=["GET"])
 def index():
@@ -54,7 +52,6 @@ def index():
 		"name": "SAMPLE STORE NAME",
 		"id": store_id
 	})
-	r.geoadd("stores", lng, lat, store)
 	return make_response(store, 200)
 ```
 
@@ -90,11 +87,12 @@ location = /app {
 }
 ```
 
-Now it comes to the main part of the whole application, the `cache.lua` file that handles the caching. This file gets parameters from the request, searches through the `redis` database for any near records, serves the user if anything is found, and otherwise requests to the upstream application.
+Now it comes to the main part of the whole application, the `cache.lua` file that handles the caching. This file gets parameters from the request, searches through the `redis` database for any near records, serves the user if anything is found, and otherwise requests to the upstream application and saves the response in redis for the next requests.
 ```
 local redis = require 'redis'
 
 redis.commands.georadius = redis.command('GEORADIUS')
+redis.commands.geoadd = redis.command('GEOADD')
 
 local client = redis.connect('redis', 6379)
 local lat = ngx.var.arg_lat
@@ -120,6 +118,7 @@ local res = ngx.location.capture("/app", {
 		long = long
 	}
 })
+client:geoadd("stores", long, lat, res.body)
 ngx.status = res.status  
 return ngx.say(res.body)
 ```

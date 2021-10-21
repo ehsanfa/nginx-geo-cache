@@ -1,6 +1,7 @@
 local redis = require 'redis'
 
 redis.commands.georadius = redis.command('GEORADIUS')
+redis.commands.geoadd = redis.command('GEOADD')
 
 local client = redis.connect('redis', 6379)
 local lat = ngx.var.arg_lat
@@ -26,5 +27,6 @@ local res = ngx.location.capture("/app", {
 		long = long
 	}
 })
+client:geoadd("stores", long, lat, res.body)
 ngx.status = res.status  
 return ngx.say(res.body)

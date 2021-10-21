@@ -1,9 +1,7 @@
 from flask import Flask, make_response, request
-import redis
 import json
 
 app = Flask(__name__)
-r = redis.Redis(host='redis', port=6379, db=0)
 
 @app.route('/', methods=["GET"])
 def index():
@@ -15,5 +13,4 @@ def index():
 		"name": "SAMPLE STORE NAME",
 		"id": store_id
 	})
-	r.geoadd("stores", lng, lat, store)
 	return make_response(store, 200)
